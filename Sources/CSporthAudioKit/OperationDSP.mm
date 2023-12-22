@@ -5,6 +5,7 @@
 #include "ParameterRamper.h"
 #include "Soundpipe.h"
 #include "plumber.h"
+#include <cmath>
 #include <string>
 
 enum OperationParameter : AUParameterAddress {
@@ -24,6 +25,10 @@ enum OperationParameter : AUParameterAddress {
     OperationParameter14,
     OperationTrigger
 };
+
+float midiNoteToFrequency(uint8_t note) {
+    return std::pow(2.0, (static_cast<float>(note) - 69.0) / 12.0) * 440.f;
+}
 
 class OperationDSP : public SoundpipeDSPBase {
 private:
@@ -76,6 +81,8 @@ public:
         uint8_t status = midiEvent.data[0] & 0xF0;
         if(status == MIDI_NOTE_ON) {
             pd.p[OperationTrigger] = 1.0;
+            // Hack: use parameter 14 to shuttle over the midi note
+            pd.p[OperationParameter14] = midiNoteToFrequency(midiEvent.data[1]);
         }
     }
 
